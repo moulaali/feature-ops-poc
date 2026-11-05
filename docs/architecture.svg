@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="560" viewBox="0 0 1100 560" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#0f172a" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <rect width="1100" height="560" fill="#ffffff"/>
+
+  <text x="550" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">Unleash Feature Flag POC — Architecture</text>
+
+  <!-- Client -->
+  <rect x="30" y="220" width="170" height="110" rx="10" fill="#f1f5f9" stroke="#475569" stroke-width="2" filter="url(#shadow)"/>
+  <text x="115" y="255" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">Client</text>
+  <text x="115" y="277" text-anchor="middle" font-size="12" fill="#334155">Browser / curl</text>
+  <text x="115" y="300" text-anchor="middle" font-size="11" fill="#475569">GET /search</text>
+  <text x="115" y="315" text-anchor="middle" font-size="11" fill="#475569">?q=hello&amp;userId=…</text>
+
+  <!-- Java Service container -->
+  <rect x="250" y="60" width="400" height="440" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="450" y="86" text-anchor="middle" font-size="15" font-weight="700" fill="#1e3a8a">Java Service</text>
+  <text x="450" y="104" text-anchor="middle" font-size="12" fill="#1e40af">Spring Boot 3.3.5 · Java 21 · port 8080</text>
+
+  <!-- Router -->
+  <rect x="280" y="120" width="340" height="80" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="2" filter="url(#shadow)"/>
+  <text x="450" y="152" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">SearchRoutingService</text>
+  <text x="450" y="174" text-anchor="middle" font-size="12" fill="#334155">isEnabled("search-v2", userId)</text>
+
+  <!-- V1 -->
+  <rect x="280" y="250" width="160" height="80" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2" filter="url(#shadow)"/>
+  <text x="360" y="282" text-anchor="middle" font-size="15" font-weight="700" fill="#78350f">V1</text>
+  <text x="360" y="303" text-anchor="middle" font-size="11" fill="#92400e">OLD search engine</text>
+
+  <!-- V2 -->
+  <rect x="460" y="250" width="160" height="80" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="2" filter="url(#shadow)"/>
+  <text x="540" y="282" text-anchor="middle" font-size="15" font-weight="700" fill="#064e3b">V2</text>
+  <text x="540" y="303" text-anchor="middle" font-size="11" fill="#065f46">NEW search engine</text>
+
+  <!-- SDK -->
+  <rect x="280" y="390" width="340" height="80" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="2" filter="url(#shadow)"/>
+  <text x="450" y="422" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">Unleash Java SDK Client</text>
+  <text x="450" y="444" text-anchor="middle" font-size="12" fill="#334155">v12.3.1 · in-memory cache + file backup</text>
+
+  <!-- Unleash container -->
+  <rect x="720" y="60" width="350" height="300" rx="14" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="895" y="86" text-anchor="middle" font-size="15" font-weight="700" fill="#4c1d95">Unleash OSS Server</text>
+  <text x="895" y="104" text-anchor="middle" font-size="12" fill="#5b21b6">v8.3.1 · port 4242</text>
+
+  <!-- Flag -->
+  <rect x="745" y="120" width="300" height="70" rx="10" fill="#ffffff" stroke="#7c3aed" stroke-width="2" filter="url(#shadow)"/>
+  <text x="895" y="148" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">Feature: search-v2</text>
+  <text x="895" y="170" text-anchor="middle" font-size="12" fill="#334155">project default · env development · initially OFF</text>
+
+  <!-- Strategies -->
+  <rect x="745" y="210" width="300" height="56" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="895" y="233" text-anchor="middle" font-size="13" font-weight="700" fill="#3b0764">Strategy 1: flexibleRollout</text>
+  <text x="895" y="252" text-anchor="middle" font-size="11" fill="#4c1d95">0% · stickiness userId · groupId search-v2</text>
+
+  <rect x="745" y="280" width="300" height="56" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="895" y="303" text-anchor="middle" font-size="13" font-weight="700" fill="#3b0764">Strategy 2: Allowlist</text>
+  <text x="895" y="322" text-anchor="middle" font-size="11" fill="#4c1d95">100% · userId IN [alice, bob, qa-123]</text>
+
+  <text x="1058" y="275" text-anchor="middle" font-size="11" font-weight="700" fill="#7c3aed" transform="rotate(90 1058 275)">OR</text>
+
+  <!-- PostgreSQL cylinder -->
+  <g filter="url(#shadow)">
+    <path d="M820,410 v70 a75,14 0 0 0 150,0 v-70" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+    <ellipse cx="895" cy="410" rx="75" ry="14" fill="#bae6fd" stroke="#0284c7" stroke-width="2"/>
+  </g>
+  <text x="895" y="453" text-anchor="middle" font-size="14" font-weight="700" fill="#0c4a6e">PostgreSQL</text>
+  <text x="895" y="472" text-anchor="middle" font-size="11" fill="#075985">16-alpine</text>
+
+  <!-- Arrows -->
+  <!-- Client -> Router -->
+  <path d="M200,275 H232 V140 H276" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="228" y="210" text-anchor="end" font-size="11" fill="#334155" transform="rotate(-90 228 210)">HTTP :8080</text>
+
+  <!-- Router -> V1 / V2 -->
+  <path d="M360,200 V246" fill="none" stroke="#d97706" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="368" y="228" font-size="11" font-weight="700" fill="#b45309">false</text>
+  <path d="M540,200 V246" fill="none" stroke="#059669" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="548" y="228" font-size="11" font-weight="700" fill="#047857">true</text>
+
+  <!-- SDK -> Router (flag evaluation) -->
+  <path d="M280,430 H262 V180 H276" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrowBlue)"/>
+  <text x="256" y="330" text-anchor="middle" font-size="10" fill="#1d4ed8" transform="rotate(-90 256 330)">local evaluation</text>
+
+  <!-- SDK -> Unleash (poll) -->
+  <path d="M620,430 H690 V155 H741" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#arrowBlue)"/>
+  <text x="684" y="300" text-anchor="middle" font-size="11" font-weight="700" fill="#1d4ed8" transform="rotate(-90 684 300)">HTTP poll every 5s</text>
+
+  <!-- Unleash -> Postgres -->
+  <path d="M895,360 V392" fill="none" stroke="#334155" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+
+  <!-- Footer -->
+  <text x="550" y="540" text-anchor="middle" font-size="12" fill="#64748b">Flag changes in Unleash take effect in the running service within ~5s, with no rebuild or restart</text>
+</svg>

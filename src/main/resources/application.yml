@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+unleash:
+  # Base API URL of the Unleash instance
+  api-url: ${UNLEASH_API_URL:http://localhost:4242/api}
+  # LOCAL DEMO CREDENTIAL ONLY: Do NOT use in staging/production environments.
+  # Scoped to default project and development environment.
+  api-key: ${UNLEASH_API_KEY:default:development.local-demo-backend-token-for-java-service}
+  # Local demo admin token for UI controls
+  admin-token: ${UNLEASH_ADMIN_TOKEN:*:*.local-demo-admin-token-not-for-production}
+  app-name: search-service
+  instance-id: search-service-local-1
+  fetch-toggles-interval-seconds: 5
+
+logging:
+  level:
+    com.example.search: INFO
+    io.getunleash: INFO

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unleash Feature Flag POC - Search Service</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --v1: #f59e0b;
+      --v2: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .container { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); padding-bottom: 16px;
+    }
+    h1 { font-size: 1.5rem; font-weight: 700; }
+    .subtitle { color: var(--text-muted); font-size: 0.875rem; }
+    .badge {
+      display: inline-block; padding: 4px 10px; border-radius: 9999px;
+      font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+    }
+    .badge-on { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+    .badge-off { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+    .card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
+    }
+    .card h2 { font-size: 1.1rem; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    label { font-size: 0.85rem; color: var(--text-muted); }
+    input {
+      background: #0f172a; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); padding: 8px 12px; font-size: 0.95rem;
+    }
+    input:focus { outline: none; border-color: var(--primary); }
+    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    button {
+      background: #334155; color: var(--text); border: none; border-radius: 6px;
+      padding: 8px 14px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      transition: all 0.15s ease-in-out;
+    }
+    button:hover { background: #475569; }
+    button.btn-primary { background: var(--primary); }
+    button.btn-primary:hover { background: var(--primary-hover); }
+    button.btn-success { background: #059669; }
+    button.btn-success:hover { background: #047857; }
+    button.btn-danger { background: #dc2626; }
+    button.btn-danger:hover { background: #b91c1c; }
+    button.active-pct { outline: 2px solid #60a5fa; background: #1e3a8a; }
+    .preset-btn { font-size: 0.75rem; padding: 4px 8px; background: #1e293b; border: 1px solid var(--border); }
+    .preset-btn:hover { background: #334155; }
+    .allowlist-tag { color: #34d399; font-weight: 600; }
+    .result-box {
+      margin-top: 14px; padding: 14px; border-radius: 8px; background: #0f172a;
+      border: 1px solid var(--border); min-height: 80px;
+    }
+    .impl-v1 { color: #fbbf24; font-weight: 700; }
+    .impl-v2 { color: #34d399; font-weight: 700; }
+    .poll-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; font-style: italic; }
+    .bar-container { background: #0f172a; border-radius: 6px; overflow: hidden; height: 24px; display: flex; margin: 12px 0; }
+    .bar-v1 { background: var(--v1); height: 100%; transition: width 0.3s; }
+    .bar-v2 { background: var(--v2); height: 100%; transition: width 0.3s; }
+    pre { font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; word-break: break-all; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div>
+      <h1>Search Service - Feature Flag POC</h1>
+      <div class="subtitle">Spring Boot 3 &bull; Java 21 &bull; Unleash Native SDK</div>
+    </div>
+    <div style="text-align: right;">
+      <span id="flagBadge" class="badge badge-off">Flag search-v2: OFF</span>
+      <div id="rolloutSummary" class="subtitle" style="margin-top: 4px;">Rollout: 0%</div>
+    </div>
+  </header>
+
+  <!-- Control Panel -->
+  <div class="card">
+    <h2>
+      <span>Unleash Flag Controls (search-v2)</span>
+      <button onclick="fetchStatus()" style="font-size: 0.75rem; padding: 4px 10px;">Refresh Status</button>
+    </h2>
+    <div class="grid">
+      <div>
+        <label>Toggle Flag State (development environment)</label>
+        <div class="btn-group">
+          <button class="btn-success" onclick="toggleFlag(true)">Turn Flag ON</button>
+          <button class="btn-danger" onclick="toggleFlag(false)">Turn Flag OFF</button>
+        </div>
+      </div>
+      <div>
+        <label>Adjust Percentage Rollout (Stickiness: userId)</label>
+        <div class="btn-group">
+          <button onclick="setRollout(0)" id="pct-0">0%</button>
+          <button onclick="setRollout(10)" id="pct-10">10%</button>
+          <button onclick="setRollout(50)" id="pct-50">50%</button>
+          <button onclick="setRollout(100)" id="pct-100">100%</button>
+        </div>
+      </div>
+    </div>
+    <div class="poll-note">
+      * Note: Unleash Java SDK polls the server every 5 seconds. Changes will reflect in search results within 5 seconds.
+    </div>
+  </div>
+
+  <!-- Interactive Search Test -->
+  <div class="card">
+    <h2>Interactive Search (GET /search)</h2>
+    <div class="grid">
+      <div>
+        <div class="form-group">
+          <label for="queryInput">Query (q):</label>
+          <input type="text" id="queryInput" value="hello" placeholder="Search query...">
+        </div>
+        <div class="form-group">
+          <label for="userIdInput">User ID (userId):</label>
+          <input type="text" id="userIdInput" value="alice" placeholder="User ID...">
+        </div>
+        <div>
+          <label>Quick User Presets:</label>
+          <div class="btn-group">
+            <button class="preset-btn" onclick="setUser('alice')"><span class="allowlist-tag">alice</span> (Allowlist)</button>
+            <button class="preset-btn" onclick="setUser('bob')"><span class="allowlist-tag">bob</span> (Allowlist)</button>
+            <button class="preset-btn" onclick="setUser('qa-123')"><span class="allowlist-tag">qa-123</span> (Allowlist)</button>
+            <button class="preset-btn" onclick="setUser('charlie')">charlie</button>
+            <button class="preset-btn" onclick="setUser('dave')">dave</button>
+            <button class="preset-btn" onclick="setRandomUser()">Random User</button>
+          </div>
+        </div>
+        <div style="margin-top: 14px;">
+          <button class="btn-primary" onclick="runSearch()" style="width: 100%;">Execute Search</button>
+        </div>
+      </div>
+
+      <div>
+        <label>Result:</label>
+        <div class="result-box" id="resultBox">
+          <span style="color: var(--text-muted);">Click "Execute Search" to evaluate request.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Distribution Check -->
+  <div class="card">
+    <h2>100 Non-Allowlisted Users Distribution Test</h2>
+    <p class="subtitle" style="margin-bottom: 12px;">
+      Simulates 100 distinct random non-allowlisted users to test rollout percentage distribution.
+    </p>
+    <button class="btn-primary" onclick="runDistributionTest(100)">Run 100 Users Sample</button>
+
+    <div class="bar-container" id="barContainer" style="display: none;">
+      <div class="bar-v1" id="barV1" style="width: 100%;"></div>
+      <div class="bar-v2" id="barV2" style="width: 0%;"></div>
+    </div>
+    <div id="distStats" class="subtitle" style="margin-top: 6px;"></div>
+  </div>
+</div>
+
+<script>
+  let currentRollout = 0;
+  let isFlagEnabled = false;
+
+  function setUser(userId) {
+    document.getElementById('userIdInput').value = userId;
+    runSearch();
+  }
+
+  function setRandomUser() {
+    const randomId = 'user-' + Math.floor(Math.random() * 10000);
+    document.getElementById('userIdInput').value = randomId;
+    runSearch();
+  }
+
+  async function fetchStatus() {
+    try {
+      const res = await fetch('/api/flag/status');
+      if (!res.ok) return;
+      const data = await res.json();
+      isFlagEnabled = data.enabled;
+      currentRollout = data.rolloutPercentage;
+
+      const badge = document.getElementById('flagBadge');
+      if (data.enabled) {
+        badge.className = 'badge badge-on';
+        badge.textContent = 'Flag search-v2: ON';
+      } else {
+        badge.className = 'badge badge-off';
+        badge.textContent = 'Flag search-v2: OFF';
+      }
+
+      document.getElementById('rolloutSummary').textContent =
+        `Rollout: ${data.rolloutPercentage}% | Allowlist: [alice, bob, qa-123]`;
+
+      [0, 10, 50, 100].forEach(pct => {
+        const btn = document.getElementById(`pct-${pct}`);
+        if (btn) {
+          if (pct === data.rolloutPercentage) {
+            btn.classList.add('active-pct');
+          } else {
+            btn.classList.remove('active-pct');
+          }
+        }
+      });
+    } catch (e) {
+      console.error('Failed to fetch status:', e);
+    }
+  }
+
+  async function toggleFlag(enabled) {
+    try {
+      await fetch(`/api/flag/toggle?enabled=${enabled}`, { method: 'POST' });
+      await fetchStatus();
+      showToast(`Flag turned ${enabled ? 'ON' : 'OFF'}. Java SDK will refresh within 5s.`);
+    } catch (e) {
+      alert('Error toggling flag: ' + e);
+    }
+  }
+
+  async function setRollout(pct) {
+    try {
+      await fetch(`/api/flag/rollout?percentage=${pct}`, { method: 'POST' });
+      await fetchStatus();
+      showToast(`Rollout updated to ${pct}%. Java SDK will refresh within 5s.`);
+    } catch (e) {
+      alert('Error updating rollout: ' + e);
+    }
+  }
+
+  async function runSearch() {
+    const q = encodeURIComponent(document.getElementById('queryInput').value);
+    const userId = encodeURIComponent(document.getElementById('userIdInput').value);
+    const resultBox = document.getElementById('resultBox');
+
+    resultBox.innerHTML = '<span style="color: var(--text-muted)">Executing search...</span>';
+
+    try {
+      const res = await fetch(`/search?q=${q}&userId=${userId}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        resultBox.innerHTML = `<span style="color: var(--danger)">Error (${res.status}): ${data.message || 'Bad Request'}</span>`;
+        return;
+      }
+
+      const isV2 = data.implementation === 'v2';
+      const implClass = isV2 ? 'impl-v2' : 'impl-v1';
+      const implLabel = isV2 ? 'V2 (NEW Engine)' : 'V1 (OLD Engine)';
+
+      resultBox.innerHTML = `
+        <div style="margin-bottom: 8px;">
+          Implementation: <span class="${implClass}">[ ${implLabel} ]</span>
+        </div>
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      `;
+    } catch (e) {
+      resultBox.innerHTML = `<span style="color: var(--danger)">Request failed: ${e}</span>`;
+    }
+  }
+
+  async function runDistributionTest(count) {
+    const statsDiv = document.getElementById('distStats');
+    const barContainer = document.getElementById('barContainer');
+    const barV1 = document.getElementById('barV1');
+    const barV2 = document.getElementById('barV2');
+
+    barContainer.style.display = 'flex';
+    statsDiv.textContent = `Running ${count} requests across distinct random users...`;
+
+    let v1 = 0, v2 = 0;
+    const promises = [];
+
+    for (let i = 1; i <= count; i++) {
+      const u = `dist-user-${i}-${Date.now()}`;
+      promises.push(
+        fetch(`/search?q=test&userId=${u}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.implementation === 'v2') v2++;
+            else v1++;
+          })
+          .catch(() => {})
+      );
+    }
+
+    await Promise.all(promises);
+
+    const v1Pct = ((v1 / count) * 100).toFixed(1);
+    const v2Pct = ((v2 / count) * 100).toFixed(1);
+
+    barV1.style.width = v1Pct + '%';
+    barV2.style.width = v2Pct + '%';
+
+    statsDiv.innerHTML = `
+      <strong>Sample Complete (${count} requests):</strong><br>
+      <span class="impl-v1">V1 (OLD Engine): ${v1} (${v1Pct}%)</span> &nbsp;|&nbsp;
+      <span class="impl-v2">V2 (NEW Engine): ${v2} (${v2Pct}%)</span>
+    `;
+  }
+
+  function showToast(msg) {
+    const resultBox = document.getElementById('resultBox');
+    resultBox.innerHTML = `<span style="color: var(--primary)">* ${msg}</span>`;
+  }
+
+  fetchStatus();
+</script>
+
+</body>
+</html>
